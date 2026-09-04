@@ -1,6 +1,40 @@
 <?php
 require_once '../Includes/db.php';
 $contactUser = currentUser();
+$connection = db();
+$settings = $connection->query('SELECT * FROM site_settings WHERE id = 1')->fetch() ?: [];
+$contactSuccess = '';
+$contactErrors = [];
+$sender = $contactUser['name'] ?? '';
+$senderEmail = $contactUser['email'] ?? '';
+$subject = '';
+$body = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'contact-message') {
+    $sender = trim($_POST['sender'] ?? '');
+    $senderEmail = strtolower(trim($_POST['email'] ?? ''));
+    $subject = trim($_POST['subject'] ?? '');
+    $body = trim($_POST['message'] ?? '');
+
+    if ($sender === '') $contactErrors[] = 'Please enter your name.';
+    if (!filter_var($senderEmail, FILTER_VALIDATE_EMAIL)) $contactErrors[] = 'Please enter a valid email address.';
+    if ($subject === '') $contactErrors[] = 'Please enter a subject.';
+    if (strlen($body) < 10) $contactErrors[] = 'Please tell us a little more about your inquiry.';
+
+    if (!$contactErrors) {
+        $statement = $connection->prepare('INSERT INTO messages (sender, email, subject, message) VALUES (?, ?, ?, ?)');
+        $statement->execute([$sender, $senderEmail, $subject, $body]);
+        $contactSuccess = 'Thanks! Your message has been sent to the LFT team.';
+        $subject = '';
+        $body = '';
+    }
+}
+
+$siteEmail = $settings['email'] ?? 'lftdumaguete@gmail.com';
+$sitePhone = $settings['phone'] ?? '+63 9912345678';
+$siteAddress = $settings['address'] ?? 'Hibard St. Dumaguete City, Negros Oriental';
+$phoneHref = preg_replace('/[^0-9+]/', '', $sitePhone);
+
 $pageTitle = 'Contact | LFT Dumaguete';
 $currentPage = 'CONTACT';
 require '../Includes/header.php';
@@ -20,9 +54,9 @@ require '../Includes/header.php';
                 <p class="section-label">VISIT LFT</p>
                 <h2>See the space in person.</h2>
                 <p>Reserve a workspace, check in when you arrive, or contact our team if you need help choosing the right setup.</p>
-                <div class="contact-detail"><i class="fa-solid fa-location-dot"></i><span>Hibard St. Dumaguete City,<br>Negros Oriental</span></div>
-                <div class="contact-detail"><i class="fa-solid fa-envelope"></i><a href="mailto:lftdumaguete@gmail.com">lftdumaguete@gmail.com</a></div>
-                <div class="contact-detail"><i class="fa-solid fa-phone"></i><a href="tel:+639912345678">+63 9912345678</a></div>
+                <div class="contact-detail"><i class="fa-solid fa-location-dot"></i><span><?= nl2br(e($siteAddress)) ?></span></div>
+                <div class="contact-detail"><i class="fa-solid fa-envelope"></i><a href="mailto:<?= e($siteEmail) ?>"><?= e($siteEmail) ?></a></div>
+                <div class="contact-detail"><i class="fa-solid fa-phone"></i><a href="tel:<?= e($phoneHref) ?>"><?= e($sitePhone) ?></a></div>
             </div>
 
             <div class="tour-form">
@@ -40,12 +74,43 @@ require '../Includes/header.php';
                     <a class="btn btn-green" href="<?= $contactUser['role'] === 'admin' ? '../Admin/index.php' : '../Staff/index.php' ?>">OPEN <?= strtoupper(e($contactUser['role'])) ?> WORKSPACE</a>
                 <?php else: ?>
                     <p class="section-label">CHOOSE YOUR VISIT</p>
-                    <h3>Sign in to continue</h3>
+                    <h3>Sign in to reserve a space</h3>
                     <p>Create an account once, then use it to reserve spaces and manage your visits.</p>
                     <a class="btn btn-green" href="../Login/index.php?next=../Booking/index.php">LOG IN OR CREATE ACCOUNT</a>
                     <a class="text-link" href="../Login/index.php?next=../Booking/index.php?type=walk-in">I am already at LFT</a>
                 <?php endif; ?>
             </div>
+        </div>
+    </section>
+
+    <section class="listing-section">
+        <div class="container contact-grid">
+            <div class="contact-copy">
+                <p class="section-label">SEND A MESSAGE</p>
+                <h2>Need help before booking?</h2>
+                <p>Send your question directly to the LFT team. It will appear in the admin inbox for follow-up.</p>
+            </div>
+
+            <form class="tour-form" method="post" action="#message-us">
+                <span id="message-us"></span>
+                <input type="hidden" name="action" value="contact-message">
+                <?php if ($contactSuccess): ?><div class="success-message"><?= e($contactSuccess) ?></div><?php endif; ?>
+                <?php foreach ($contactErrors as $contactError): ?><div class="form-error"><?= e($contactError) ?></div><?php endforeach; ?>
+
+                <label for="sender">Name</label>
+                <input id="sender" name="sender" value="<?= e($sender) ?>" required>
+
+                <label for="contact-email">Email</label>
+                <input id="contact-email" name="email" type="email" value="<?= e($senderEmail) ?>" required>
+
+                <label for="subject">Subject</label>
+                <input id="subject" name="subject" value="<?= e($subject) ?>" required>
+
+                <label for="message">Message</label>
+                <textarea id="message" name="message" rows="6" minlength="10" required><?= e($body) ?></textarea>
+
+                <button class="btn btn-green" type="submit">SEND MESSAGE</button>
+            </form>
         </div>
     </section>
 </main>
