@@ -4,6 +4,19 @@ requireRole(['admin']);
 
 function adminRedirect(string $section, string $query = ''): never
 {
-    header('Location: ../index.php' . ($query ? '?' . $query : '') . '#' . $section);
+    $allowedSections = ['bookings', 'customers', 'staff', 'memberships', 'spaces', 'amenities', 'events', 'messages', 'settings'];
+    $section = in_array($section, $allowedSections, true) ? $section : '';
+
+    if ($section === '') {
+        $target = '../index.php';
+    } else {
+        $target = '../' . $section . '/index.php';
+    }
+
+    if ($query !== '') {
+        $target .= '?' . ltrim($query, '?');
+    }
+
+    header('Location: ' . $target);
     exit;
 }
