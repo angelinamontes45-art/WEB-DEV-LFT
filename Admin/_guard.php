@@ -9,6 +9,9 @@ if (!$adminUser || $adminUser['role'] !== 'admin') {
     exit;
 }
 
+// Shared admin partials expect the authenticated account in $user.
+$user = $adminUser;
+
 function adminRedirect(string $section, string $query = ''): never
 {
     $allowedSections = ['bookings', 'customers', 'staff', 'memberships', 'spaces', 'amenities', 'events', 'messages', 'settings'];
