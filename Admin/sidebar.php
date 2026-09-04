@@ -2,7 +2,8 @@
 $currentFolder = basename(dirname($_SERVER['SCRIPT_FILENAME']));
 $pendingBookings = (int) db()->query("SELECT COUNT(*) FROM bookings WHERE status = 'Pending'")->fetchColumn();
 $unreadMessages = (int) db()->query("SELECT COUNT(*) FROM messages WHERE status = 'Unread'")->fetchColumn();
-$isStaff = ($user['role'] ?? '') === 'staff';
+$isStaffWorkspace = $currentFolder === 'Staff';
+$isStaff = ($user['role'] ?? '') === 'staff' || $isStaffWorkspace;
 $logoutPath = $isStaff ? '../Logout/index.php' : null;
 
 if ($isStaff) {
@@ -40,6 +41,11 @@ if ($isStaff) {
         <a href="../Staff/index.php#arrivals">
             <i class="fa-solid fa-person-walking-arrow-right" aria-hidden="true"></i><span>Today’s arrivals</span>
         </a>
+        <?php if (($user['role'] ?? '') === 'admin'): ?>
+            <a href="../Admin/index.php">
+                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span>Back to Admin</span>
+            </a>
+        <?php endif; ?>
         <a href="../index.php">
             <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i><span>Public website</span>
         </a>
