@@ -74,6 +74,10 @@ if ($isStaff) {
             <i class="fa-regular fa-envelope"></i>
             <span>Messages</span>
         </a>
+        <a class="<?= $currentFolder === 'staff' ? 'admin-nav-active' : '' ?>" href="<?= $adminPath ?>staff/">
+            <i class="fa-solid fa-users-gear"></i>
+            <span>Staff accounts</span>
+        </a>
         <a class="<?= $currentFolder === 'settings' ? 'admin-nav-active' : '' ?>" href="<?= $adminPath ?>settings/">
             <i class="fa-solid fa-gear"></i>
             <span>Settings</span>
