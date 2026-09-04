@@ -1,6 +1,12 @@
 const menuToggle = document.querySelector('#menuToggle');
 const mainNav = document.querySelector('#mainNav');
 
+function closeMobileMenu() {
+    if (!menuToggle || !mainNav) return;
+    mainNav.classList.remove('open');
+    menuToggle.setAttribute('aria-expanded', 'false');
+}
+
 if (menuToggle && mainNav) {
     menuToggle.addEventListener('click', () => {
         const isOpen = mainNav.classList.toggle('open');
@@ -8,24 +14,28 @@ if (menuToggle && mainNav) {
     });
 
     mainNav.querySelectorAll('a').forEach((link) => {
-        link.addEventListener('click', () => {
-            mainNav.classList.remove('open');
-            menuToggle.setAttribute('aria-expanded', 'false');
-        });
+        link.addEventListener('click', closeMobileMenu);
+    });
+
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 850) closeMobileMenu();
     });
 }
 
-const tourForm = document.querySelector('#tourForm');
-const formMessage = document.querySelector('#formMessage');
-
-if (tourForm && formMessage) {
-    tourForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-        formMessage.textContent = 'Thanks. We received your request and will be in touch shortly.';
-        formMessage.classList.add('is-visible');
-        tourForm.reset();
+document.querySelectorAll('.customer-account-menu').forEach((menu) => {
+    document.addEventListener('click', (event) => {
+        if (menu.open && !menu.contains(event.target)) {
+            menu.removeAttribute('open');
+        }
     });
-}
+
+    menu.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            menu.removeAttribute('open');
+            menu.querySelector('summary')?.focus();
+        }
+    });
+});
 
 document.querySelectorAll('[data-carousel]').forEach((carousel) => {
     const track = carousel.querySelector('[data-carousel-track]');
@@ -35,7 +45,10 @@ document.querySelectorAll('[data-carousel]').forEach((carousel) => {
     if (!track || !previous || !next) return;
 
     const move = (direction) => {
-        track.scrollBy({ left: direction * track.clientWidth * 0.85, behavior: 'smooth' });
+        track.scrollBy({
+            left: direction * track.clientWidth * 0.85,
+            behavior: 'smooth'
+        });
     };
 
     previous.addEventListener('click', () => move(-1));
