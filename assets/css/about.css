@@ -1,0 +1,490 @@
+/* ================================
+   ABOUT HERO
+================================ */
+
+.about-hero {
+    height: 153px;
+    position: relative;
+
+    background-image: url("../images/about.png");
+    background-size: cover;
+    background-position: center;
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.hero-content {
+    position: relative;
+
+    width: 100%;
+    max-width: 80%;
+
+    margin: auto;
+    padding-top: 25px;
+
+    color: white;
+}
+
+.hero-content h1 {
+    font-family: "Playfair Display", serif;
+
+    font-size: 55px;
+    font-weight: 400;
+
+    line-height: 1;
+}
+
+.hero-content p {
+    margin-top: 5px;
+
+    font-family: "Playfair Display", serif;
+
+    font-size: 15px;
+}
+
+.hero-line {
+    display: block;
+
+    width: 100px;
+    height: 3px;
+
+    background: #c9924b;
+
+    margin-top: 7px;
+}
+
+
+/* ================================
+   WHO WE ARE
+================================ */
+
+.who-section {
+    padding: 40px 0 35px;
+}
+
+.who-container {
+    width: 100%;
+    max-width: 80%;
+
+    margin: auto;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    align-items: center;
+
+    gap: 45px;
+}
+
+.section-label {
+    display: block;
+
+    color: #c9924b;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 10px;
+}
+
+.who-text h2 {
+    font-family: "Playfair Display", serif;
+
+    font-size: 27px;
+    font-weight: 500;
+
+    margin-bottom: 5px;
+}
+
+.who-text p {
+    font-size: 11px;
+    line-height: 1.55;
+
+    margin-bottom: 14px;
+}
+
+.story-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+
+    background: #123f30;
+    color: white;
+
+    padding: 8px 13px;
+
+    border-radius: 20px;
+
+    font-size: 8px;
+}
+
+.story-btn:hover {
+    background: #c9924b;
+}
+
+.story-btn i {
+    font-size: 15px;
+}
+
+.who-image img {
+    width: 100%;
+    height: 215px;
+
+    object-fit: cover;
+
+    border-radius: 17px;
+}
+
+
+/* ================================
+   MISSION & VISION
+================================ */
+
+.mission-section {
+    padding-bottom: 20px;
+}
+
+.mission-container {
+    width: 100%;
+    max-width: 80%;
+
+    margin: auto;
+
+    background: #f6ecd8;
+
+    border-radius: 15px;
+
+    padding: 21px 35px;
+
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+
+    align-items: center;
+
+    gap: 20px;
+}
+
+.mission-box {
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+}
+
+.big-icon {
+    width: 60px;
+    height: 60px;
+
+    min-width: 60px;
+
+    border: 7px solid #123f30;
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #123f30;
+
+    font-size: 27px;
+}
+
+.eye-icon {
+    border: none;
+    border-radius: 0;
+
+    font-size: 52px;
+}
+
+.mission-box h2 {
+    font-family: "Playfair Display", serif;
+
+    font-size: 25px;
+    font-weight: 500;
+
+    margin-bottom: 2px;
+}
+
+.mission-box p {
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.divider {
+    width: 1px;
+    height: 95px;
+
+    background: #c9924b;
+}
+
+
+/* ================================
+   VALUES
+================================ */
+
+.values-section {
+    width: 100%;
+    max-width: 80%;
+
+    margin: auto;
+
+    padding-bottom: 35px;
+}
+
+.values-heading {
+    text-align: center;
+
+    margin-bottom: 15px;
+}
+
+.values-heading span {
+    color: #c9924b;
+
+    font-size: 10px;
+    font-weight: 600;
+
+    letter-spacing: 1px;
+
+    margin: 0 12px;
+}
+
+.heading-line {
+    display: inline-block;
+
+    width: 100px;
+    height: 3px;
+
+    background: #c9924b;
+
+    vertical-align: middle;
+}
+
+.values-heading p {
+    font-size: 10px;
+
+    margin-top: 8px;
+}
+
+
+.values-container {
+    display: grid;
+
+    grid-template-columns: repeat(4, 1fr);
+}
+
+
+.value-item {
+    min-height: 94px;
+
+    padding: 10px 18px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    border-right: 1px solid #c9924b;
+}
+
+.value-item:last-child {
+    border-right: none;
+}
+
+
+.value-icon {
+    width: 50px;
+    height: 50px;
+
+    min-width: 50px;
+
+    background: #f6ecd8;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 23px;
+}
+
+.value-text h3 {
+    font-family: "Playfair Display", serif;
+
+    font-size: 17px;
+    font-weight: 500;
+
+    margin-bottom: 4px;
+}
+
+.value-text p {
+    font-size: 9px;
+    line-height: 1.4;
+}
+
+.values-section,
+.values-container,
+.value-item {
+    border-top: none !important;
+    border-bottom: none !important;
+}
+/* ================================
+   CTA
+================================ */
+
+.cta-section {
+    width: 100%;
+    max-width: 80%;
+
+    height: 106px;
+
+    margin: 0 auto 12px;
+
+    position: relative;
+
+    border-radius: 15px;
+
+    overflow: hidden;
+
+    background-image: url("../images/common.png");
+    background-size: cover;
+    background-position: center;
+}
+
+.cta-overlay {
+    position: absolute;
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.67);
+}
+
+.cta-content {
+    position: relative;
+
+    height: 100%;
+
+    padding: 20px 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    color: white;
+}
+
+.cta-content h2 {
+    font-family: "Playfair Display", serif;
+
+    font-size: 20px;
+    font-weight: 400;
+
+    margin-bottom: 5px;
+}
+
+.cta-content p {
+    font-size: 10px;
+}
+
+.cta-btn {
+    display: flex;
+    align-items: center;
+
+    gap: 18px;
+
+    background: #c9924b;
+
+    padding: 13px 20px;
+
+    border-radius: 25px;
+
+    color: white;
+
+    font-size: 9px;
+}
+
+.cta-btn i {
+    font-size: 17px;
+}
+
+.cta-btn:hover {
+    background: #123f30;
+}
+
+
+/* ================================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 700px) {
+
+    .about-hero {
+        height: 180px;
+    }
+
+    .hero-content {
+        width: 85%;
+        padding-top: 45px;
+    }
+
+    .hero-content h1 {
+        font-size: 45px;
+    }
+
+
+    .who-container {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+
+    .who-image {
+        order: -1;
+    }
+
+
+    .mission-container {
+        grid-template-columns: 1fr;
+        padding: 25px;
+    }
+
+    .divider {
+        width: 100%;
+        height: 1px;
+    }
+
+
+    .values-container {
+        grid-template-columns: 1fr;
+    }
+
+    .value-item {
+        border-right: none;
+        border-bottom: 1px solid #c9924b;
+
+        padding: 15px;
+    }
+
+    .value-item:last-child {
+        border-bottom: none;
+    }
+
+
+    .cta-section {
+        width: 90%;
+        height: auto;
+    }
+
+    .cta-content {
+        flex-direction: column;
+        align-items: flex-start;
+
+        gap: 15px;
+
+        padding: 25px;
+    }
+}

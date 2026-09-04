@@ -1,0 +1,13 @@
+<?php
+require '../_guard.php';
+$errors = [];
+$values = ['name' => '', 'description' => '', 'price' => '', 'period' => '', 'features' => '', 'status' => 'Active'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    foreach (array_keys($values) as $field) $values[$field] = trim($_POST[$field] ?? $values[$field]);
+    $values['status'] = $values['status'] === 'Inactive' ? 'Inactive' : 'Active';
+    foreach (['name', 'description', 'price', 'period', 'features'] as $field) if ($values[$field] === '') $errors[] = ucfirst($field) . ' is required.';
+    if (!$errors) { $statement = db()->prepare('INSERT INTO memberships (label, name, price, period, description, features, status, featured, active) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)'); $statement->execute(['MEMBERSHIP', $values['name'], $values['price'], $values['period'], $values['description'], $values['features'], $values['status'], $values['status'] === 'Active' ? 1 : 0]); adminRedirect('memberships', 'message=' . urlencode('Membership added successfully.')); }
+}
+$pageTitle = 'Add membership | LFT Admin';
+?>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title><?= e($pageTitle) ?></title><link rel="stylesheet" href="../../assets/css/style.css"></head><body><main class="admin-app"><?php require "../sidebar.php"; ?><div class="admin-main"><header class="admin-topbar"><div><p class="section-label">MEMBERSHIP CATALOG</p><h1>Add membership</h1><p>Create a plan with pricing, duration, and features.</p></div><a class="text-link" href="index.php">Back to memberships</a><?php require "../profile.php"; ?></header><section class="admin-widget booking-detail"><?php foreach ($errors as $error): ?><div class="form-error"><?= e($error) ?></div><?php endforeach; ?><form class="admin-editor" method="post"><label>Membership name<input name="name" value="<?= e($values['name']) ?>" required></label><label>Price<input name="price" value="<?= e($values['price']) ?>" required></label><label>Duration<input name="period" value="<?= e($values['period']) ?>" required></label><label>Status<select name="status"><option>Active</option><option <?= $values['status'] === 'Inactive' ? 'selected' : '' ?>>Inactive</option></select></label><label>Description<textarea name="description" rows="4" required><?= e($values['description']) ?></textarea></label><label>Features<textarea name="features" rows="5" placeholder="One feature per line" required><?= e($values['features']) ?></textarea></label><button class="btn btn-green" type="submit">ADD MEMBERSHIP</button></form></section></div></main></body></html>

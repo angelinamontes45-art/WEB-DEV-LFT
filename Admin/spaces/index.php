@@ -1,0 +1,14 @@
+<?php
+require '../_guard.php';
+$connection = db();
+$search = trim($_GET['q'] ?? '');
+$message = $_GET['message'] ?? '';
+$parameters = [];
+$where = '';
+if ($search !== '') { $where = 'WHERE name LIKE ? OR category LIKE ?'; $term = '%' . $search . '%'; $parameters = [$term, $term]; }
+$statement = $connection->prepare("SELECT * FROM spaces $where ORDER BY active DESC, name ASC");
+$statement->execute($parameters);
+$spaces = $statement->fetchAll();
+$pageTitle = 'Spaces | LFT Admin';
+?>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title><?= e($pageTitle) ?></title><link rel="stylesheet" href="../../assets/css/style.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"></head><body><main class="admin-app"><?php require '../sidebar.php'; ?><div class="admin-main"><header class="admin-topbar"><div><p class="section-label">LFT DUMAGUETE</p><h1>Spaces</h1><p>Manage the spaces shown in the public catalog.</p></div><?php require '../profile.php'; ?></header><?php if ($message): ?><div class="success-message"><?= e($message) ?></div><?php endif; ?><section class="admin-widget booking-panel"><div class="widget-heading"><div><h2>Space catalog</h2><p><?= count($spaces) ?> <?= count($spaces) === 1 ? 'space' : 'spaces' ?></p></div><a class="btn btn-green" href="add.php">ADD SPACE</a></div><form class="booking-filters" method="get"><label for="space-search">Search</label><input id="space-search" name="q" value="<?= e($search) ?>" placeholder="Name or category"><button class="btn btn-green" type="submit">SEARCH</button><?php if ($search !== ''): ?><a class="text-link" href="index.php">Clear</a><?php endif; ?></form><div class="booking-table"><div class="space-table-head"><span>Space</span><span>Category</span><span>Seats</span><span>Rates</span><span>Visibility</span><span>Actions</span></div><?php if (!$spaces): ?><div class="empty-state">No spaces found.</div><?php else: foreach ($spaces as $space): ?><div class="space-table-row"><div><strong><?= e($space['name']) ?></strong><small><?= e($space['image']) ?></small></div><span><?= e($space['category']) ?></span><span><?= nl2br(e($space['rates'])) ?></span><span class="table-status <?= $space['active'] ? '' : 'status-cancelled' ?>"><?= $space['active'] ? 'Published' : 'Hidden' ?></span><div class="row-actions"><a class="text-link" href="edit.php?id=<?= (int) $space['id'] ?>">Edit</a><form method="post" action="delete.php" onsubmit="return confirm('Delete this space?');"><input type="hidden" name="id" value="<?= (int) $space['id'] ?>"><button class="danger-link" type="submit">Delete</button></form></div></div><?php endforeach; endif; ?></div></section></div></main></body></html>
