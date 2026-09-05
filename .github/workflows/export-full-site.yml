@@ -1,0 +1,31 @@
+name: Export Full Website
+
+on:
+  push:
+    branches:
+      - fix/customer-header-match-mockup
+    paths:
+      - '.github/workflows/export-full-site.yml'
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout website
+        uses: actions/checkout@v4
+
+      - name: Prepare website package
+        shell: bash
+        run: |
+          mkdir -p package/WEB-DEV-LFT
+          shopt -s dotglob extglob
+          cp -R -- !(package|.git) package/WEB-DEV-LFT/
+          rm -f package/WEB-DEV-LFT/.github/workflows/export-full-site.yml
+
+      - name: Upload full website
+        uses: actions/upload-artifact@v4
+        with:
+          name: WEB-DEV-LFT-full-website
+          path: package/WEB-DEV-LFT
+          include-hidden-files: true
+          retention-days: 1
