@@ -21,7 +21,7 @@ if ($loggedInUser && $loggedInUser['role'] === 'customer') {
          ORDER BY visit_date ASC, visit_time ASC
          LIMIT 5"
     );
-    $notificationStatement->execute([(int) $loggedInUser['id'], appDate()]);
+    $notificationStatement->execute([(int) $loggedInUser['id'], appToday()]);
     $customerNotifications = $notificationStatement->fetchAll();
 
     $notificationCountStatement = db()->prepare(
@@ -31,7 +31,7 @@ if ($loggedInUser && $loggedInUser['role'] === 'customer') {
            AND status IN ('Pending', 'Confirmed', 'Checked in')
            AND visit_date >= ?"
     );
-    $notificationCountStatement->execute([(int) $loggedInUser['id'], appDate()]);
+    $notificationCountStatement->execute([(int) $loggedInUser['id'], appToday()]);
     $customerNotificationCount = (int) $notificationCountStatement->fetchColumn();
 }
 ?>
