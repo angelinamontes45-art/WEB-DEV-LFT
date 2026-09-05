@@ -1,141 +1,23 @@
 <?php
 require '../Includes/db.php';
-$user = requireRole(['staff', 'admin']);
+$user = requireRole(['staff','admin']);
 $connection = db();
-$allowedStatuses = ['Pending', 'Confirmed', 'Checked in', 'Completed', 'Cancelled'];
-$message = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['status'] ?? '', $allowedStatuses, true)) {
-    $statement = $connection->prepare('UPDATE bookings SET status = ? WHERE id = ?');
-    $statement->execute([$_POST['status'], (int) ($_POST['booking_id'] ?? 0)]);
-    $message = 'Booking status updated.';
+$message='';$error='';
+if($_SERVER['REQUEST_METHOD']==='POST'){
+    $bookingId=(int)($_POST['booking_id']??0);$status=$_POST['status']??'';
+    if($bookingId>0 && updateBookingStatus($connection,$bookingId,$status,$user['role']==='admin')) $message='Booking status updated.';
+    else $error='That status change is not allowed.';
 }
-
-$today = date('Y-m-d');
-$todayStatement = $connection->prepare(
-    'SELECT bookings.*, users.name, users.email
-     FROM bookings
-     JOIN users ON users.id = bookings.user_id
-     WHERE bookings.visit_date = ?
-     ORDER BY bookings.visit_time ASC'
-);
-$todayStatement->execute([$today]);
-$todayBookings = $todayStatement->fetchAll();
-
-$upcomingStatement = $connection->prepare(
-    "SELECT bookings.*, users.name
-     FROM bookings
-     JOIN users ON users.id = bookings.user_id
-     WHERE bookings.visit_date > ?
-       AND bookings.status NOT IN ('Cancelled', 'Completed')
-     ORDER BY bookings.visit_date ASC, bookings.visit_time ASC
-     LIMIT 6"
-);
-$upcomingStatement->execute([$today]);
-$upcoming = $upcomingStatement->fetchAll();
-
-$counts = [
-    'today' => count($todayBookings),
-    'pending' => (int) $connection->query("SELECT COUNT(*) FROM bookings WHERE status = 'Pending'")->fetchColumn(),
-    'checked' => (int) $connection->query("SELECT COUNT(*) FROM bookings WHERE status = 'Checked in'")->fetchColumn(),
-    'spaces' => (int) $connection->query('SELECT COUNT(*) FROM spaces WHERE active = 1')->fetchColumn(),
-];
-$pageTitle = 'Staff Desk | LFT Dumaguete';
-$currentStaffPage = 'overview';
+$today=appToday();
+$s=$connection->prepare('SELECT bookings.*,users.name,users.email FROM bookings JOIN users ON users.id=bookings.user_id WHERE bookings.visit_date=? ORDER BY bookings.visit_time ASC');$s->execute([$today]);$todayBookings=$s->fetchAll();
+$s=$connection->prepare("SELECT bookings.*,users.name FROM bookings JOIN users ON users.id=bookings.user_id WHERE bookings.visit_date>? AND bookings.status NOT IN ('Cancelled','Completed') ORDER BY bookings.visit_date,bookings.visit_time LIMIT 6");$s->execute([$today]);$upcoming=$s->fetchAll();
+$counts=['today'=>count($todayBookings),'pending'=>(int)$connection->query("SELECT COUNT(*) FROM bookings WHERE status='Pending'")->fetchColumn(),'checked'=>(int)$connection->query("SELECT COUNT(*) FROM bookings WHERE status='Checked in'")->fetchColumn(),'spaces'=>(int)$connection->query('SELECT COUNT(*) FROM spaces WHERE active=1')->fetchColumn()];
+$pageTitle='Staff Desk | LFT Dumaguete';$currentStaffPage='overview';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= e($pageTitle) ?></title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-</head>
-<body>
-<main class="admin-app">
-    <?php require '../Admin/sidebar.php'; ?>
-    <div class="admin-main">
-        <header class="admin-topbar">
-            <div>
-                <p class="section-label">STAFF DESK / <?= e(date('l, F j')) ?></p>
-                <h1>Hello, <?= e($user['name']) ?>.</h1>
-                <p>Keep arrivals, check-ins, and guest requests moving smoothly.</p>
-            </div>
-            <?php require '../Admin/profile.php'; ?>
-        </header>
-
-        <?php if ($message): ?><div class="success-message"><i class="fa-solid fa-circle-check"></i><?= e($message) ?></div><?php endif; ?>
-
-        <section class="staff-kpis">
-            <article class="staff-kpi"><span>Today’s visits</span><strong><?= $counts['today'] ?></strong><small>Scheduled arrivals</small></article>
-            <article class="staff-kpi"><span>Pending review</span><strong><?= $counts['pending'] ?></strong><small>Needs attention</small></article>
-            <article class="staff-kpi"><span>Checked in</span><strong><?= $counts['checked'] ?></strong><small>Currently on site</small></article>
-            <article class="staff-kpi"><span>Active spaces</span><strong><?= $counts['spaces'] ?></strong><small>Ready to welcome</small></article>
-        </section>
-
-        <div class="staff-content">
-            <section class="staff-panel staff-panel-wide" id="arrivals">
-                <div class="widget-heading">
-                    <div><h2>Today’s arrivals</h2><p><?= e(date('D, M j, Y')) ?> · front desk queue</p></div>
-                    <a class="text-link" href="bookings.php">View all bookings</a>
-                </div>
-                <?php if (!$todayBookings): ?>
-                    <div class="empty-state">No visits scheduled for today.</div>
-                <?php else: ?>
-                    <?php foreach ($todayBookings as $booking): ?>
-                        <article class="staff-row">
-                            <div>
-                                <span class="request-type"><?= e(ucfirst($booking['booking_type'])) ?></span>
-                                <h3><?= e($booking['space']) ?></h3>
-                                <small><?= e($booking['name']) ?> · <?= e($booking['email']) ?></small>
-                            </div>
-                            <div>
-                                <strong><?= e(date('g:i A', strtotime($booking['visit_time']))) ?></strong>
-                                <span><?= e($booking['status']) ?></span>
-                            </div>
-                            <form method="post">
-                                <input type="hidden" name="booking_id" value="<?= (int) $booking['id'] ?>">
-                                <select name="status" aria-label="Update booking status">
-                                    <?php foreach ($allowedStatuses as $status): ?>
-                                        <option value="<?= e($status) ?>" <?= $booking['status'] === $status ? 'selected' : '' ?>><?= e($status) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <button class="btn btn-green" type="submit">SAVE</button>
-                            </form>
-                            <a class="text-link" href="view.php?id=<?= (int) $booking['id'] ?>">Details</a>
-                        </article>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </section>
-
-            <section class="staff-panel">
-                <div class="widget-heading"><div><h2>Desk checklist</h2><p>Keep the welcome experience ready.</p></div></div>
-                <div class="staff-checklist">
-                    <div><i class="fa-solid fa-check"></i><span>Review pending requests</span></div>
-                    <div><i class="fa-solid fa-check"></i><span>Prepare reserved rooms</span></div>
-                    <div><i class="fa-solid fa-check"></i><span>Check Wi-Fi and coffee corner</span></div>
-                    <div><i class="fa-solid fa-check"></i><span>Close completed visits</span></div>
-                </div>
-            </section>
-
-            <section class="staff-panel">
-                <div class="widget-heading"><div><h2>Coming up</h2><p>Next active visits</p></div></div>
-                <?php if (!$upcoming): ?>
-                    <div class="empty-state">Nothing upcoming.</div>
-                <?php else: ?>
-                    <div class="staff-quick-links">
-                        <?php foreach ($upcoming as $booking): ?>
-                            <a href="view.php?id=<?= (int) $booking['id'] ?>">
-                                <span><?= e($booking['space']) ?><small><?= e($booking['name']) ?></small></span>
-                                <strong><?= e(date('M j', strtotime($booking['visit_date']))) ?></strong>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </section>
-        </div>
-    </div>
-</main>
-</body>
-</html>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=e($pageTitle)?></title><link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"></head><body><main class="admin-app"><?php require '../Admin/sidebar.php'; ?><div class="admin-main"><header class="admin-topbar"><div><p class="section-label">STAFF DESK / <?=e(appNow()->format('l, F j'))?></p><h1>Hello, <?=e($user['name'])?>.</h1><p>Keep arrivals and check-ins moving in the correct order.</p></div><?php require '../Admin/profile.php'; ?></header>
+<?php if($message):?><div class="success-message"><i class="fa-solid fa-circle-check"></i> <?=e($message)?></div><?php endif;?><?php if($error):?><div class="form-error"><?=e($error)?></div><?php endif;?>
+<section class="staff-kpis"><article class="staff-kpi"><span>Today’s visits</span><strong><?=$counts['today']?></strong><small>Scheduled arrivals</small></article><article class="staff-kpi"><span>Pending review</span><strong><?=$counts['pending']?></strong><small>Needs attention</small></article><article class="staff-kpi"><span>Checked in</span><strong><?=$counts['checked']?></strong><small>Currently on site</small></article><article class="staff-kpi"><span>Active spaces</span><strong><?=$counts['spaces']?></strong><small>Ready to welcome</small></article></section>
+<div class="staff-content"><section class="staff-panel staff-panel-wide" id="arrivals"><div class="widget-heading"><div><h2>Today’s arrivals</h2><p><?=e(appNow()->format('D, M j, Y'))?> · front desk queue</p></div><a class="text-link" href="bookings.php">View all bookings</a></div>
+<?php if(!$todayBookings):?><div class="empty-state">No visits scheduled for today.</div><?php else:foreach($todayBookings as $booking):$next=bookingStatusTransitions()[$booking['status']]??[];?><article class="staff-row"><div><span class="request-type"><?=e(bookingReference((int)$booking['id']))?> · <?=e(ucfirst($booking['booking_type']))?></span><h3><?=e($booking['space'])?></h3><small><?=e($booking['name'])?> · <?=e($booking['email'])?> · <?= (int)$booking['guest_count']?> guest(s)</small></div><div><strong><?=e(date('g:i A',strtotime($booking['visit_time'])))?></strong><span><?=e($booking['status'])?></span></div><?php if($next||$user['role']==='admin'):?><form method="post"><input type="hidden" name="booking_id" value="<?=(int)$booking['id']?>"><select name="status"><option value="<?=e($booking['status'])?>"><?=e($booking['status'])?></option><?php foreach(array_keys(bookingStatusTransitions()) as $st):if($st===$booking['status'])continue;if($user['role']!=='admin'&&!in_array($st,$next,true))continue;?><option value="<?=e($st)?>"><?=e($st)?></option><?php endforeach;?></select><button class="btn btn-green" type="submit">SAVE</button></form><?php endif;?><a class="text-link" href="view.php?id=<?=(int)$booking['id']?>">Details</a></article><?php endforeach;endif;?></section>
+<section class="staff-panel"><div class="widget-heading"><div><h2>Desk checklist</h2><p>Recommended flow</p></div></div><div class="staff-checklist"><div><i class="fa-solid fa-check"></i><span>Review Pending requests</span></div><div><i class="fa-solid fa-check"></i><span>Confirm valid reservations</span></div><div><i class="fa-solid fa-check"></i><span>Check guests in on arrival</span></div><div><i class="fa-solid fa-check"></i><span>Complete finished visits</span></div></div></section>
+<section class="staff-panel"><div class="widget-heading"><div><h2>Coming up</h2><p>Next active visits</p></div></div><?php if(!$upcoming):?><div class="empty-state">Nothing upcoming.</div><?php else:?><div class="staff-quick-links"><?php foreach($upcoming as $booking):?><a href="view.php?id=<?=(int)$booking['id']?>"><span><?=e($booking['space'])?><small><?=e($booking['name'])?></small></span><strong><?=e(date('M j',strtotime($booking['visit_date'])))?></strong></a><?php endforeach;?></div><?php endif;?></section></div></div></main></body></html>

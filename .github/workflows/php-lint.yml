@@ -1,4 +1,4 @@
-name: PHP Syntax Check
+name: PHP Validation
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  php-lint:
+  php-validation:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -25,3 +25,6 @@ jobs:
         run: |
           find . -type f -name '*.php' -not -path './storage/*' -print0 \
             | xargs -0 -n1 php -l
+
+      - name: Run deployment health check
+        run: php scripts/health-check.php
