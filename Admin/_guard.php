@@ -9,7 +9,10 @@ if (!$adminUser || $adminUser['role'] !== 'admin') {
     exit;
 }
 
-// Shared admin partials expect the authenticated account in $user.
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
+}
+
 $user = $adminUser;
 
 function adminRedirect(string $section, string $query = ''): never
@@ -17,11 +20,7 @@ function adminRedirect(string $section, string $query = ''): never
     $allowedSections = ['bookings', 'customers', 'staff', 'memberships', 'spaces', 'amenities', 'events', 'messages', 'settings'];
     $section = in_array($section, $allowedSections, true) ? $section : '';
     $target = $section === '' ? '../index.php' : '../' . $section . '/index.php';
-
-    if ($query !== '') {
-        $target .= '?' . ltrim($query, '?');
-    }
-
+    if ($query !== '') $target .= '?' . ltrim($query, '?');
     header('Location: ' . $target);
     exit;
 }
