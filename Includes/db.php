@@ -9,16 +9,9 @@ function db(): PDO
 {
     static $connection;
     if ($connection instanceof PDO) return $connection;
-
     $storagePath = dirname(__DIR__) . '/storage';
-    if (!is_dir($storagePath) && !mkdir($storagePath, 0750, true) && !is_dir($storagePath)) {
-        throw new RuntimeException('Unable to create storage directory.');
-    }
-
-    $connection = new PDO('sqlite:' . $storagePath . '/lft.sqlite', null, null, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
+    if (!is_dir($storagePath) && !mkdir($storagePath, 0750, true) && !is_dir($storagePath)) throw new RuntimeException('Unable to create storage directory.');
+    $connection = new PDO('sqlite:' . $storagePath . '/lft.sqlite', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
     $connection->exec('PRAGMA foreign_keys = ON');
     $connection->exec('PRAGMA busy_timeout = 5000');
     ensureDatabaseSchema($connection);
@@ -52,38 +45,18 @@ function requireRole(array $roles): array
         header('Location: ../Login/index.php');
         exit;
     }
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') verifyCsrf();
     return $user;
 }
 
-function e(string|int|float|null $value): string
-{
-    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
-}
-
-function appToday(): string
-{
-    return (new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE)))->format('Y-m-d');
-}
-
-function appNow(): DateTimeImmutable
-{
-    return new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE));
-}
-
-function bookingReference(int $id): string
-{
-    return 'LFT-' . str_pad((string)$id, 6, '0', STR_PAD_LEFT);
-}
+function e(string|int|float|null $value): string { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
+function appToday(): string { return (new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE)))->format('Y-m-d'); }
+function appNow(): DateTimeImmutable { return new DateTimeImmutable('now', new DateTimeZone(APP_TIMEZONE)); }
+function bookingReference(int $id): string { return 'LFT-' . str_pad((string)$id, 6, '0', STR_PAD_LEFT); }
 
 function bookingStatusTransitions(): array
 {
-    return [
-        'Pending' => ['Confirmed', 'Cancelled'],
-        'Confirmed' => ['Checked in', 'Cancelled'],
-        'Checked in' => ['Completed'],
-        'Completed' => [],
-        'Cancelled' => [],
-    ];
+    return ['Pending'=>['Confirmed','Cancelled'],'Confirmed'=>['Checked in','Cancelled'],'Checked in'=>['Completed'],'Completed'=>[],'Cancelled'=>[]];
 }
 
 function canTransitionBooking(string $from, string $to, bool $adminOverride = false): bool
@@ -99,16 +72,13 @@ function updateBookingStatus(PDO $connection, int $bookingId, string $newStatus,
     $statement->execute([$bookingId]);
     $current = $statement->fetchColumn();
     if (!is_string($current) || !canTransitionBooking($current, $newStatus, $adminOverride)) return false;
-
-    $checkedInAt = $newStatus === 'Checked in' ? appNow()->format('Y-m-d H:i:s') : null;
-    $sql = $newStatus === 'Checked in'
-        ? 'UPDATE bookings SET status = ?, checked_in_at = ?, updated_at = ? WHERE id = ?'
-        : 'UPDATE bookings SET status = ?, updated_at = ? WHERE id = ?';
-    $update = $connection->prepare($sql);
+    $now = appNow()->format('Y-m-d H:i:s');
     if ($newStatus === 'Checked in') {
-        $update->execute([$newStatus, $checkedInAt, appNow()->format('Y-m-d H:i:s'), $bookingId]);
+        $update = $connection->prepare('UPDATE bookings SET status = ?, checked_in_at = ?, updated_at = ? WHERE id = ?');
+        $update->execute([$newStatus, $now, $now, $bookingId]);
     } else {
-        $update->execute([$newStatus, appNow()->format('Y-m-d H:i:s'), $bookingId]);
+        $update = $connection->prepare('UPDATE bookings SET status = ?, updated_at = ? WHERE id = ?');
+        $update->execute([$newStatus, $now, $bookingId]);
     }
     return $update->rowCount() > 0;
 }
@@ -119,18 +89,10 @@ function bookingHasConflict(PDO $connection, string $space, string $date, string
     $start = DateTimeImmutable::createFromFormat('!H:i', $time);
     if (!$start) return true;
     $end = $start->modify('+' . $durationMinutes . ' minutes')->format('H:i');
-
-    $sql = "SELECT visit_time, duration_minutes FROM bookings
-            WHERE space = ? AND visit_date = ?
-              AND status NOT IN ('Cancelled', 'Completed')";
+    $sql = "SELECT visit_time, duration_minutes FROM bookings WHERE space = ? AND visit_date = ? AND status NOT IN ('Cancelled', 'Completed')";
     $params = [$space, $date];
-    if ($excludeId !== null) {
-        $sql .= ' AND id <> ?';
-        $params[] = $excludeId;
-    }
-    $statement = $connection->prepare($sql);
-    $statement->execute($params);
-
+    if ($excludeId !== null) { $sql .= ' AND id <> ?'; $params[] = $excludeId; }
+    $statement = $connection->prepare($sql);$statement->execute($params);
     foreach ($statement->fetchAll() as $booking) {
         $otherStart = DateTimeImmutable::createFromFormat('!H:i', (string)$booking['visit_time']);
         if (!$otherStart) continue;
